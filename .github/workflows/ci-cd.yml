@@ -1,0 +1,62 @@
+name: React CI/CD to Docker Hub and GHCR
+
+on:
+  push:
+    branches: [ "main" ]
+
+# Erlaubt dem automatischen GitHub-Token, Pakete (Images) in die Registry zu pushen
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  build-test-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Code auschecken
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # 2. Node.js installieren (für React)
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    # 3. Dependencies installieren
+    - name: Install dependencies
+      run: npm install
+
+    # 4. Tests ausführen (falls React Tests hat)
+    - name: Run tests
+      run: npm test
+      # Verhindert, dass der Test im Watch-Modus hängen bleibt
+      env:
+        CI: true 
+
+    # 5. Bei Docker Hub einloggen
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    # 6. Bei GitHub Container Registry (GHCR) einloggen
+    - name: Log in to GHCR
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    # 7. Docker Image bauen und an BEIDE Registries pushen
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        # GitHub wandelt Repository-Namen automatisch in Kleinbuchstaben um (wichtig für GHCR)
+        tags: |
+          ${{ secrets.DOCKERHUB_USERNAME }}/m347-ref-card-02:latest
+          ghcr.io/${{ github.repository_owner }}/m347-ref-card-02:latest
