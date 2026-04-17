@@ -59,4 +59,4 @@ jobs:
         # GitHub wandelt Repository-Namen automatisch in Kleinbuchstaben um (wichtig für GHCR)
         tags: |
           ${{ secrets.DOCKERHUB_USERNAME }}/m347-ref-card-02:latest
-          ghcr.io/${{ github.repository_owner }}/m347-ref-card-02:latest
+          ghcr.io/berkayy19/m347-ref-card-02:latest
